@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+/* Lynnar plugin panel
+   Minimalism & Swiss, dense tool UI, Inter/system type.
+   Monochrome: ink on white. Selected and submit controls are filled;
+   every other control is an outline button of the same size and radius. */
+:root {
+  --bg: #f4f4f5;
+  --surface: #ffffff;
+  --ink: #18181b;
+  --ink-hover: #27272a;
+  --muted: #3f3f46;
+  --line: #d4d4d8;
+  --line-strong: #a1a1aa;
+  --soft: #e4e4e7;
+  --danger: #9f1239;
+  --added: #e4e4e7;
+  --focus: #18181b;
+  --on-ink: #ffffff;
+  --scroll-track: #f4f4f5;
+  --scroll-thumb: #a1a1aa;
+  --scroll-thumb-hover: #71717a;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+button, textarea {
+  font-family: inherit;
+}
+
+h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+
+#container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.top-section {
+  padding: 12px 12px 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+#guidesHeading {
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.guide-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  min-height: 32px;
+  padding: 4px 10px;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+button:hover {
+  background: var(--bg);
+  border-color: var(--line-strong);
+}
+
+button:active {
+  background: var(--soft);
+}
+
+.status {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status[hidden] { display: none !important; }
+
+.options-container {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.option-box {
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.option-box.selected,
+#send,
+.send-button {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+}
+
+.option-box.selected:hover,
+#send:hover,
+.send-button:hover {
+  background: var(--ink-hover);
+  border-color: var(--ink-hover);
+  color: var(--on-ink);
+}
+
+.option-box.selected:active,
+#send:active,
+.send-button:active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+}
+
+.inline-error {
+  margin: 8px 0 0;
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.inline-error[hidden] { display: none !important; }
+
+#send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  flex: 0 0 auto;
+}
+
+button:disabled,
+button:disabled:hover,
+.option-button.disabled,
+.option-button.disabled:hover,
+#send:disabled,
+#send:disabled:hover,
+.send-button:disabled,
+.send-button:disabled:hover {
+  background: var(--soft);
+  border-color: var(--soft);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+.option-box:focus-visible,
+.chat-input:focus-visible,
+.latest-prompt-text:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.chat-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.chat-header {
+  padding: 8px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+#chatHeaderTitle { display: block; }
+
+.latest-prompt-display {
+  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin: 8px 12px 0;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.06), 0 8px 18px rgba(24, 24, 27, 0.08);
+}
+
+.prompt-caption {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.prompt-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.latest-prompt-display[style*="display: block"],
+.latest-prompt-display[style*="display: flex"] {
+  display: flex !important;
+}
+
+.prompt-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  flex: 0 0 auto;
+}
+
+.latest-prompt-text {
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+  max-height: calc(1.45em * 3 + 12px);
+  overflow: auto;
+  padding: 6px 0;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 500;
+  white-space: normal;
+  outline: none;
+}
+
+.latest-prompt-text:focus {
+  background: var(--bg);
+  padding: 4px;
+}
+
+.latest-prompt-text .diff-added {
+  background: var(--added);
+  font-weight: 600;
+  padding: 0 2px;
+}
+
+.latest-prompt-text .diff-unchanged { color: var(--ink); }
+
+.chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 12px;
+  background: var(--bg);
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.message.user { align-items: flex-end; }
+
+.message-avatar {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.message.user .message-avatar,
+.message.assistant .message-avatar {
+  background: transparent;
+  color: var(--muted);
+}
+
+.message-content {
+  max-width: 92%;
+  padding: 8px 10px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  word-wrap: break-word;
+}
+
+.message.user .message-content {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.loading {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.loading[style*="display: block"] { display: flex !important; }
+
+.loading-mark {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--line);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex: 0 0 auto;
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.chat-input-container {
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.chat-input-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.chat-input {
+  flex: 1;
+  min-height: 36px;
+  max-height: 80px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.4;
+  resize: none;
+  outline: none;
+}
+
+.chat-input:focus { border-color: var(--ink); }
+
+.chat-input:disabled {
+  background: var(--bg);
+  color: var(--muted);
+}
+
+.send-button {
+  min-height: 36px;
+  padding: 8px 12px;
+  flex: 0 0 auto;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.control-button {
+  min-height: 32px;
+}
+
+.option-carousel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 12px 0;
+  min-width: 0;
+}
+
+.option-buttons {
+  display: flex;
+  flex: 1;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 2px;
+  position: relative;
+  background: transparent;
+  border: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 4px;
+  scrollbar-width: none;
+}
+
+.option-buttons::-webkit-scrollbar { display: none; }
+
+.option-buttons.can-scroll-next {
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 24px), transparent);
+}
+
+.option-buttons.can-scroll-prev {
+  mask-image: linear-gradient(to right, transparent, #000 24px);
+}
+
+.option-buttons.can-scroll-prev.can-scroll-next {
+  mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+
+.option-button {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  white-space: nowrap;
+}
+
+.option-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  flex: 0 0 auto;
+}
+
+.option-nav[hidden] { display: none !important; }
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  margin-bottom: 10px;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--muted);
+  border-radius: 50%;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+  0%, 80%, 100% { opacity: 0.35; }
+  40% { opacity: 1; }
+}
+
+.chat-messages,
+#latestPromptText {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+.chat-messages::-webkit-scrollbar,
+#latestPromptText::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb,
+#latestPromptText::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+  </style>
+</head>
+<body>
+<div id="container">
+  <section class="top-section" aria-labelledby="guidesHeading">
+    <h2 id="guidesHeading">Generate layout guides</h2>
+    <div class="guide-bar">
+      <div class="options-container" role="group" aria-label="Poster elements">
+        <button type="button" class="option-box" data-value="title" aria-pressed="false">Title</button>
+        <button type="button" class="option-box" data-value="location" aria-pressed="false">Location</button>
+        <button type="button" class="option-box" data-value="time" aria-pressed="false">Time</button>
+        <button type="button" class="option-box" data-value="host" aria-pressed="false">Host</button>
+        <button type="button" class="option-box" data-value="purpose" aria-pressed="false">Purpose</button>
+        <button type="button" class="option-box" data-value="other/descriptions" aria-pressed="false">Other / Descriptions</button>
+      </div>
+      <button type="button" id="send" aria-label="Generate guides">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 13V3.5M8 3.5L3.75 7.75M8 3.5l4.25 4.25" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <p id="selectionStatus" class="status" role="status" hidden></p>
+    <p id="guideError" class="inline-error" role="alert" hidden></p>
+  </section>
+
+  <section class="chat-section" aria-labelledby="chatHeaderTitle">
+    <div class="chat-header">
+      <h2 id="chatHeaderTitle">Prompt</h2>
+    </div>
+
+    <div class="latest-prompt-display" id="latestPromptDisplay" style="display: none;">
+      <p class="prompt-caption">Visual idea</p>
+      <div class="prompt-body">
+      <div class="latest-prompt-text" id="latestPromptText" contenteditable="true" role="textbox" aria-label="Visual idea" aria-multiline="true"></div>
+      <button type="button" id="generateImageButton" class="prompt-icon" aria-label="Generate image">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+          <rect x="2.25" y="3.25" width="11.5" height="9.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <circle cx="5.7" cy="6.2" r="0.9" fill="currentColor"/>
+          <path d="M3.2 11.3 6 8.5l1.8 1.6 2.2-2 2.8 2.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+      </button>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages" aria-live="polite">
+      <div class="message assistant">
+        <div class="message-avatar">Lynnar</div>
+        <div class="message-content">
+          Hi, I'm Lynnar, your design companion! Let's refine your prompt together.
+        </div>
+      </div>
+    </div>
+
+    <div class="loading" id="loading" role="status" aria-live="polite">
+      <span class="loading-mark" aria-hidden="true"></span>
+      <span class="loading-text">Working...</span>
+    </div>
+
+    <div class="chat-input-container">
+      <form class="chat-input-form" id="chatForm">
+        <textarea
+          class="chat-input"
+          id="chatInput"
+          aria-label="Describe your visual idea"
+          placeholder="Describe your visual idea..."
+          rows="1"
+        ></textarea>
+        <button type="submit" class="send-button" id="chatSendButton">Send</button>
+      </form>
+
+      <div class="controls">
+        <button type="button" class="control-button" onclick="resetChat()">Start over</button>
+        <button type="button" class="control-button skip-button" onclick="skipQuestion()" id="skipButton" style="display: none;">Skip this question</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:5000';
+const CHAT_ROUND_LIMIT = 10;
+let conversationHistory = [];
+let currentPrompt = '';
+let isWaitingForResponse = false;
+let isInitialPrompt = true;
+let isUserEdit = false;
+let askedQuestions = new Set();
+let chatRounds = 0;
+let chatLimitNoted = false;
+
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const chatSendButton = document.getElementById('chatSendButton');
+const chatForm = document.getElementById('chatForm');
+const loading = document.getElementById('loading');
+const skipButton = document.getElementById('skipButton');
+const latestPromptDisplay = document.getElementById('latestPromptDisplay');
+const generateImageButton = document.getElementById('generateImageButton');
+const latestPromptText = document.getElementById('latestPromptText');
+const chatHeaderTitle = document.getElementById('chatHeaderTitle');
+const sendBtn = document.getElementById('send');
+
+// Auto-resize textarea
+chatInput.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 80) + 'px';
+});
+
+function generateDiff(oldText, newText) {
+  // Concept-focused diff that only shows additions
+  const words1 = oldText.split(' ');
+  const words2 = newText.split(' ');
+  
+  let result = '';
+  let i = 0, j = 0;
+  
+  while (i < words1.length || j < words2.length) {
+    if (i < words1.length && j < words2.length && words1[i] === words2[j]) {
+      // Same word
+      result += `<span class="diff-unchanged">${words1[i]}</span> `;
+      i++;
+      j++;
+    } else {
+      // Handle additions only
+      let addedWords = [];
+      
+      // Collect all consecutive added words
+      while (j < words2.length && (i >= words1.length || words1[i] !== words2[j])) {
+        addedWords.push(words2[j]);
+        j++;
+      }
+      
+      // Skip removed words (don't display them)
+      while (i < words1.length && (j >= words2.length || words1[i] !== words2[j])) {
+        i++;
+      }
+      
+      // Add added words as a group
+      if (addedWords.length > 0) {
+        result += `<span class="diff-added">${addedWords.join(' ')}</span> `;
+      }
+    }
+  }
+  
+  return result.trim();
+}
+
+function updateLatestPromptDisplay(prompt) {
+  if (prompt) {
+    // Remove quotation marks from the prompt
+    const cleanPrompt = prompt.replace(/^["']|["']$/g, '');
+    
+    // Only show diff if this is an AI-generated update, not user edits
+    if (currentPrompt && cleanPrompt !== currentPrompt && !isUserEdit) {
+      // Show diff highlighting when not editing
+      const diffHtml = generateDiff(currentPrompt, cleanPrompt);
+      latestPromptText.innerHTML = diffHtml;
+    } else {
+      // Show plain text when editing or no changes
+      latestPromptText.textContent = cleanPrompt;
+    }
+    latestPromptDisplay.style.display = 'flex';
+  } else {
+    latestPromptDisplay.style.display = 'none';
+  }
+}
+
+// Handle editing the current prompt
+latestPromptText.addEventListener('focus', function() {
+  // Show plain text when editing
+  this.textContent = currentPrompt || '';
+  isUserEdit = true;
+});
+
+latestPromptText.addEventListener('blur', function() {
+      const editedPrompt = this.textContent.trim();
+    if (editedPrompt && editedPrompt !== currentPrompt) {
+      // Update the current prompt
+      currentPrompt = editedPrompt.replace(/^["']|["']$/g, '');
+    isUserEdit = false; // Reset flag after user edit
+    
+    // If AI was waiting for a response to a question, replace the last AI message
+    if (isWaitingForResponse) {
+      // Add a user message indicating they edited the prompt
+      addMessage("(Edited prompt)", 'user');
+      
+      // Remove the last AI message (the question)
+      const lastAIMessage = chatMessages.querySelector('.message.assistant:last-child');
+      if (lastAIMessage) {
+        lastAIMessage.remove();
+      }
+      // Clear any option buttons
+      clearOptionButtons();
+    }
+    
+    // Send the edited prompt to continue refinement
+    setTimeout(() => {
+      continueRefinement(editedPrompt);
+    }, 500);
+  } else {
+    isUserEdit = false; // Reset flag
+    // Restore diff highlighting if no changes were made
+    updateLatestPromptDisplay(currentPrompt);
+  }
+});
+
+// Handle Enter key to finish editing
+latestPromptText.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    this.blur(); // This will trigger the blur event
+  }
+});
+
+function addMessage(content, role) {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${role}`;
+  
+  const avatar = document.createElement('div');
+  avatar.className = 'message-avatar';
+  avatar.textContent = role === 'user' ? 'You' : 'Lynnar';
+  
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'message-content';
+  
+  // Clean the content for display (remove options from AI questions)
+  let displayContent = content;
+  if (role === 'assistant' && isQuestionWithOptions(content)) {
+    displayContent = cleanQuestionContent(content);
+  }
+  
+  contentDiv.textContent = displayContent;
+  
+  messageDiv.appendChild(avatar);
+  messageDiv.appendChild(contentDiv);
+  
+  chatMessages.appendChild(messageDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  
+  // If this is an AI message with options, show option buttons
+  if (role === 'assistant' && isQuestionWithOptions(content)) {
+    console.log('Question with options detected:', content);
+    const options = extractOptionsFromResponse(content);
+    console.log('Extracted options:', options, 'from content:', content);
+    if (options.length > 0) {
+      showOptionButtons(options);
+    } else {
+      console.log('No options extracted from question with options');
+      console.log('Question end pattern match:', content.match(/\?([^.!?]+)/));
+    }
+    trackQuestion(content);
+  } else if (role === 'assistant') {
+    console.log('Not a question with options:', content);
+  }
+}
+
+function cleanQuestionContent(content) {
+  const optionsPattern = /\s*[Oo]ptions?:\s*[^.!?]+[.!?]?/g;
+  return content.replace(optionsPattern, '').trim();
+}
+
+function extractQuestionKey(content) {
+  let question = content.toLowerCase();
+  question = question.replace(/^(what|which|how|when|where|why|do you|would you|could you|can you)\s+/i, '');
+  question = question.replace(/\?/g, '');
+  question = question.replace(/\s+/g, ' ').trim();
+  const commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+  question = question.split(' ').filter(word => !commonWords.includes(word)).join(' ');
+  return question;
+}
+
+function isQuestionAlreadyAsked(content) {
+  const questionKey = extractQuestionKey(content);
+  return askedQuestions.has(questionKey);
+}
+
+function trackQuestion(content) {
+  const questionKey = extractQuestionKey(content);
+  askedQuestions.add(questionKey);
+}
+
+function checkForRepetitiveQuestion(content) {
+  if (isQuestionWithOptions(content)) {
+    const cleanedQuestion = cleanQuestionContent(content);
+    if (isQuestionAlreadyAsked(cleanedQuestion)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isModelQuestion(content) {
+  const text = (content || '').toLowerCase();
+  return /\b(midjourney|niji|what model|which model|image model|--v\b|\bversion\b|\bv[4-8]\b)\b/.test(text);
+}
+
+let nextQuestionAttempts = 0;
+
+function showQuestion(responseText) {
+  nextQuestionAttempts = 0;
+  clearOptionButtons();
+  addMessage(responseText, 'assistant');
+  isWaitingForResponse = true;
+  isInitialPrompt = false;
+  skipButton.style.display = 'inline-block';
+}
+
+async function presentQuestion(responseText) {
+  if (isModelQuestion(responseText)) {
+    await requestNextQuestion();
+    return;
+  }
+  if (checkForRepetitiveQuestion(responseText)) {
+    await handleRepetitiveQuestion();
+    return;
+  }
+  showQuestion(responseText);
+}
+
+async function requestNextQuestion() {
+  if (nextQuestionAttempts >= 2 || chatIsLimited()) {
+    nextQuestionAttempts = 0;
+    isWaitingForResponse = false;
+    skipButton.style.display = 'none';
+    return;
+  }
+  nextQuestionAttempts += 1;
+  showLoading();
+  try {
+    const response = await fetch(`${API_BASE}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'Ask one different question about the subject, audience, mood, setting, color, or typography. Do not ask about the image model or version. Do not reply with an updated prompt.',
+        conversation_history: conversationHistory,
+        temperature: 0.7,
+        use_fine_tuned: true
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error('next question failed');
+    }
+    conversationHistory = data.conversation_history || conversationHistory;
+    if (data.updated_prompt) {
+      updateLatestPromptDisplay(data.updated_prompt);
+      currentPrompt = data.updated_prompt.replace(/^["']|["']$/g, '');
+      isUserEdit = false;
+    }
+    if (data.is_question && !isModelQuestion(data.response)) {
+      if (checkForRepetitiveQuestion(data.response)) {
+        await handleRepetitiveQuestion();
+      } else {
+        showQuestion(data.response);
+      }
+      return;
+    }
+    await requestNextQuestion();
+  } catch (error) {
+    console.error('Could not ask another question:', error);
+    nextQuestionAttempts = 0;
+    addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+  } finally {
+    hideLoading();
+  }
+}
+
+function chatIsLimited() {
+  return chatRounds >= CHAT_ROUND_LIMIT;
+}
+
+function beginChatRound() {
+  if (chatIsLimited()) {
+    lockChatAtLimit();
+    return false;
+  }
+  return true;
+}
+
+function finishChatRound() {
+  chatRounds += 1;
+}
+
+function lockChatAtLimit() {
+  isWaitingForResponse = false;
+  skipButton.style.display = 'none';
+  clearOptionButtons();
+  chatInput.disabled = true;
+  chatSendButton.disabled = true;
+  if (!chatLimitNoted) {
+    chatLimitNoted = true;
+    addMessage('This conversation has reached 10 rounds. Start over to refine a new idea.', 'assistant');
+  }
+}
+
+function showLoading(message = 'Refining the prompt...') {
+  const text = loading.querySelector('.loading-text');
+  if (text) text.textContent = message;
+  loading.style.display = 'block';
+  chatSendButton.disabled = true;
+  chatInput.disabled = true;
+  skipButton.style.display = 'none';
+}
+
+function hideLoading() {
+  loading.style.display = 'none';
+  if (chatIsLimited()) {
+    lockChatAtLimit();
+    return;
+  }
+  chatSendButton.disabled = false;
+  chatInput.disabled = false;
+  if (isWaitingForResponse) {
+    skipButton.style.display = 'inline-block';
+  }
+}
+
+function isQuestionWithOptions(aiResponse) {
+  const response = aiResponse.toLowerCase();
+  
+  // Check if it's a question (contains ?)
+  if (!response.includes('?')) return false;
+  
+  // Check if it's not an updated prompt
+  if (response.includes('updated prompt:')) return false;
+  
+  // Check for various option indicators
+  const optionIndicators = [
+    'options:', 'choices:', 'versions:', 'select', 'choose', 'pick',
+    'v6', 'v5', 'v4', 'v7', 'v8', 'mj', 'midjourney', 'niji', '--v'
+  ];
+  
+  // Check if any option indicators are present
+  const hasOptionIndicators = optionIndicators.some(indicator => response.includes(indicator));
+  
+  // Also check if there are comma-separated items after the question mark
+  const questionEndPattern = /\?([^.!?]+)/;
+  const questionEndMatch = response.match(questionEndPattern);
+  const hasCommaSeparatedItems = questionEndMatch && questionEndMatch[1].includes(',');
+  
+  return hasOptionIndicators || hasCommaSeparatedItems;
+}
+
+function extractOptionsFromResponse(aiResponse) {
+  const options = [];
+  
+  // First, try to extract options that are directly after a question mark
+  const questionEndPattern = /\?([^.!?]+)/;
+  const questionEndMatch = aiResponse.match(questionEndPattern);
+  
+  if (questionEndMatch && questionEndMatch[1]) {
+    let optionText = questionEndMatch[1].trim();
+    console.log('Raw option text after question mark:', optionText);
+    
+    // Clean up common prefixes/suffixes
+    optionText = optionText.replace(/^[,\s]+/, '').replace(/[,\s]+$/, '');
+    console.log('Cleaned option text:', optionText);
+    
+    if (optionText) {
+      // Split by comma and clean each option
+      const optionList = optionText.split(',').map(opt => opt.trim()).filter(opt => opt.length > 0);
+      console.log('Option list before filtering:', optionList);
+      
+      // Filter and validate options
+      const filteredOptions = optionList.filter(opt => {
+        const cleanOpt = opt.toLowerCase();
+        
+        // Special handling for single digits that might be version numbers
+        if (/^\d+$/.test(opt) && opt.length <= 2) {
+          // Convert single digits to version format
+          const versionNum = parseInt(opt);
+          if (versionNum >= 4 && versionNum <= 8) {
+            console.log(`Converting single digit "${opt}" to "--v ${opt}.0"`);
+            return false; // We'll handle this conversion separately
+          }
+        }
+        
+        const isValid = opt.length >= 2 && 
+               opt.length <= 30 && 
+               !cleanOpt.includes('options') &&
+               !cleanOpt.includes('choices') &&
+               !cleanOpt.includes('version') &&
+               !cleanOpt.includes('select') &&
+               !cleanOpt.includes('choose') &&
+               !cleanOpt.includes('thinking') &&
+               !cleanOpt.includes('for the') &&
+               /^[a-zA-Z0-9\s\-\.\-\-]+$/.test(opt); // Allow -- for Midjourney parameters
+        
+        if (!isValid) {
+          console.log(`Filtered out option "${opt}" - length: ${opt.length}, cleanOpt: "${cleanOpt}"`);
+        }
+        return isValid;
+      });
+      
+      // Handle single digit version numbers
+      const processedOptions = [];
+      for (let i = 0; i < optionList.length; i++) {
+        const opt = optionList[i];
+        if (/^\d+$/.test(opt) && opt.length <= 2) {
+          const versionNum = parseInt(opt);
+          if (versionNum >= 4 && versionNum <= 8) {
+            processedOptions.push(`--v ${opt}.0`);
+            console.log(`Added processed version: --v ${opt}.0`);
+          }
+        } else if (filteredOptions.includes(opt)) {
+          processedOptions.push(opt);
+        }
+      }
+      
+      console.log('Processed options:', processedOptions);
+      console.log('Original option list:', optionList);
+      console.log('Filtered options:', filteredOptions);
+      
+      if (processedOptions.length >= 2 && processedOptions.length <= 8) {
+        console.log(`Using processed options: ${processedOptions.length} options`);
+        options.push(...processedOptions);
+        return options;
+      } else {
+        console.log(`Not enough processed options: ${processedOptions.length} (need 2-8)`);
+      }
+      
+      if (filteredOptions.length >= 2 && filteredOptions.length <= 8) {
+        console.log(`Using filtered options: ${filteredOptions.length} options`);
+        options.push(...filteredOptions);
+        return options;
+      } else {
+        console.log(`Not enough filtered options: ${filteredOptions.length} (need 2-8)`);
+      }
+    }
+  }
+  
+  // Try multiple patterns to extract options
+  const patterns = [
+    /options?:\s*([^.!?]+)/i,
+    /choices?:\s*([^.!?]+)/i,
+    /versions?:\s*([^.!?]+)/i,
+    /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s*,\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)*)/g
+  ];
+  
+  for (const pattern of patterns) {
+    const matches = aiResponse.match(pattern);
+    if (matches) {
+      let optionText = matches[1] || matches[0];
+      
+      // Clean up the option text
+      optionText = optionText.replace(/^[^a-zA-Z]*/, '').replace(/[^a-zA-Z]*$/, '');
+      
+      if (optionText) {
+        const optionList = optionText.split(/[,\s]+/).map(opt => opt.trim()).filter(opt => opt.length > 0);
+        
+        // Filter and validate options
+        const filteredOptions = optionList.filter(opt => {
+          const cleanOpt = opt.toLowerCase();
+          return opt.length >= 2 && 
+                 opt.length <= 30 && 
+                 !cleanOpt.includes('options') &&
+                 !cleanOpt.includes('choices') &&
+                 !cleanOpt.includes('version') &&
+                 !cleanOpt.includes('select') &&
+                 !cleanOpt.includes('choose') &&
+                 /^[a-zA-Z0-9\s\-\.]+$/.test(opt); // Only allow letters, numbers, spaces, hyphens, and dots
+        });
+        
+        if (filteredOptions.length >= 2 && filteredOptions.length <= 8) {
+          options.push(...filteredOptions);
+          break; // Use the first successful pattern
+        }
+      }
+    }
+  }
+  
+  // If no options found with patterns, try to extract from common Midjourney version formats
+  if (options.length === 0) {
+    const midjourneyPatterns = [
+      /(--v\s*\d+(?:\.\d+)?)/gi,
+      /(v\d+(?:\.\d+)?)/gi,
+      /(MJ\s*\d+)/gi,
+      /(Midjourney\s*\d+)/gi,
+      /(Niji\s*\d+)/gi
+    ];
+    
+    for (const pattern of midjourneyPatterns) {
+      const matches = aiResponse.match(pattern);
+      if (matches && matches.length >= 2) {
+        const uniqueMatches = [...new Set(matches.map(m => m.trim()))];
+        if (uniqueMatches.length >= 2 && uniqueMatches.length <= 6) {
+          options.push(...uniqueMatches);
+          break;
+        }
+      }
+    }
+  }
+  
+  // Final fallback: if we have some options but they seem incomplete, try to infer missing versions
+  // Only infer if we have very few options (1-2) and it's clearly a version question
+  if (options.length > 0 && options.length <= 2 && aiResponse.toLowerCase().includes('version')) {
+    console.log('Attempting to infer missing version options...');
+    console.log('Current options before inference:', options);
+    
+    // Look for any version numbers mentioned in the response
+    const versionMatches = aiResponse.match(/\d+/g);
+    if (versionMatches) {
+      const versionNumbers = [...new Set(versionMatches.map(v => parseInt(v)))].filter(v => v >= 4 && v <= 8);
+      console.log('Found version numbers in response:', versionNumbers);
+      
+      // Add missing versions that are commonly used, but be more conservative
+      const commonVersions = [5, 6, 7]; // Focus on most common versions
+      const missingVersions = commonVersions.filter(v => !versionNumbers.includes(v));
+      console.log('Missing versions to add:', missingVersions);
+      
+      // Only add 1-2 missing versions to reach a reasonable total
+      const targetCount = Math.min(4, options.length + 2); // Aim for 3-4 total options
+      const versionsToAdd = missingVersions.slice(0, targetCount - options.length);
+      
+      for (const version of versionsToAdd) {
+        const versionOption = `--v ${version}.0`;
+        if (!options.includes(versionOption)) {
+          options.push(versionOption);
+          console.log(`Added inferred version: ${versionOption}`);
+        }
+      }
+      
+      // Sort options by version number
+      options.sort((a, b) => {
+        const aMatch = a.match(/(\d+)/);
+        const bMatch = b.match(/(\d+)/);
+        if (aMatch && bMatch) {
+          return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+        }
+        return 0;
+      });
+      
+      console.log('Final options after inference:', options);
+    }
+  }
+  
+  console.log('Final extracted options:', options);
+  console.log('Total number of options:', options.length);
+  return options;
+}
+
+function optionNavButton(direction) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'option-nav';
+  button.hidden = true;
+  button.setAttribute('aria-label', direction < 0 ? 'Previous suggestions' : 'Next suggestions');
+  const path = direction < 0 ? 'M10 3.5 5.5 8 10 12.5' : 'M6 3.5 10.5 8 6 12.5';
+  button.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="${path}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  return button;
+}
+
+function showOptionButtons(options) {
+  clearOptionButtons();
+
+  const carousel = document.createElement('div');
+  carousel.className = 'option-carousel';
+
+  const prev = optionNavButton(-1);
+  const next = optionNavButton(1);
+  const buttonContainer = document.createElement('div');
+  buttonContainer.className = 'option-buttons';
+  buttonContainer.setAttribute('role', 'group');
+  buttonContainer.setAttribute('aria-label', 'Suggested answers');
+
+  options.forEach((option) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'option-button';
+    button.textContent = option;
+    button.onclick = () => {
+      buttonContainer.querySelectorAll('.option-button').forEach(btn => btn.classList.add('disabled'));
+      sendUserResponse(option);
+    };
+    buttonContainer.appendChild(button);
+  });
+
+  carousel.append(prev, buttonContainer, next);
+  const chatInputContainer = document.querySelector('.chat-input-container');
+  chatInputContainer.parentNode.insertBefore(carousel, chatInputContainer);
+
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+
+  function updateNav() {
+    const max = buttonContainer.scrollWidth - buttonContainer.clientWidth;
+    const overflow = max > 1;
+    const atStart = buttonContainer.scrollLeft <= 1;
+    const atEnd = buttonContainer.scrollLeft >= max - 1;
+    prev.hidden = !overflow || atStart;
+    next.hidden = !overflow || atEnd;
+    buttonContainer.classList.toggle('can-scroll-prev', overflow && !atStart);
+    buttonContainer.classList.toggle('can-scroll-next', overflow && !atEnd);
+  }
+
+  function scrollToSibling(direction) {
+    const buttons = [...buttonContainer.querySelectorAll('.option-button')];
+    const left = buttonContainer.scrollLeft;
+    const viewRight = left + buttonContainer.clientWidth;
+    const target = direction > 0
+      ? buttons.find(item => item.offsetLeft + item.offsetWidth > viewRight + 1)
+      : [...buttons].reverse().find(item => item.offsetLeft < left - 1);
+    if (!target) return;
+    buttonContainer.scrollTo({ left: Math.max(0, target.offsetLeft - 4), behavior: motion });
+  }
+
+  prev.addEventListener('click', () => scrollToSibling(-1));
+  next.addEventListener('click', () => scrollToSibling(1));
+  buttonContainer.addEventListener('scroll', updateNav);
+  buttonContainer.addEventListener('wheel', (event) => {
+    if (buttonContainer.scrollWidth <= buttonContainer.clientWidth) return;
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    buttonContainer.scrollLeft += event.deltaY;
+    event.preventDefault();
+  }, { passive: false });
+
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(updateNav).observe(buttonContainer);
+  }
+  requestAnimationFrame(updateNav);
+}
+
+function clearOptionButtons() {
+  document.querySelectorAll('.option-carousel').forEach(carousel => carousel.remove());
+}
+
+async function sendInitialPrompt(prompt) {
+  if (!beginChatRound()) return;
+  showLoading();
+  
+  try {
+    const response = await fetch(`${API_BASE}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: prompt,
+        conversation_history: conversationHistory,
+        temperature: 0.7,
+        use_fine_tuned: true
+      })
+    });
+
+    const data = await response.json();
+    
+    if (response.ok) {
+      console.log('Initial AI Response data:', data);
+      console.log('Initial AI Response text:', data.response);
+      
+      // Add initial prompt to display
+      updateLatestPromptDisplay(prompt);
+      currentPrompt = prompt.replace(/^["']|["']$/g, '');
+      
+      // Add user message to chat
+      addMessage(prompt, 'user');
+      
+      if (data.is_question) {
+        await presentQuestion(data.response);
+      } else {
+        // AI provided an updated prompt directly
+        if (data.updated_prompt) {
+          updateLatestPromptDisplay(data.updated_prompt);
+          currentPrompt = data.updated_prompt.replace(/^["']|["']$/g, '');
+          isUserEdit = false; // Reset flag for AI updates
+        } else {
+          addMessage(data.response, 'assistant');
+        }
+        isWaitingForResponse = false;
+        skipButton.style.display = 'none';
+      }
+      
+      conversationHistory = data.conversation_history;
+      finishChatRound();
+    } else {
+      addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+    }
+  } catch (error) {
+    addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+    console.error('Network error:', error);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function sendUserResponse(userResponse) {
+  if (!beginChatRound()) return;
+  showLoading();
+  
+  try {
+    const response = await fetch(`${API_BASE}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: userResponse,
+        conversation_history: conversationHistory,
+        temperature: 0.7,
+        use_fine_tuned: true
+      })
+    });
+
+    const data = await response.json();
+    
+    if (response.ok) {
+      // Add user response to chat
+      addMessage(userResponse, 'user');
+      
+      console.log('AI Response data:', data);
+      console.log('AI Response text:', data.response);
+      
+      if (data.updated_prompt) {
+        // AI provided an updated prompt
+        clearOptionButtons();
+        updateLatestPromptDisplay(data.updated_prompt);
+        currentPrompt = data.updated_prompt.replace(/^["']|["']$/g, '');
+        isUserEdit = false; // Reset flag for AI updates
+        
+        // One more follow-up question only while a round remains after this reply.
+        if (chatRounds + 1 < CHAT_ROUND_LIMIT) {
+          setTimeout(() => {
+            continueRefinement(data.updated_prompt);
+          }, 1000);
+        }
+      } else if (data.is_question) {
+        await presentQuestion(data.response);
+      } else {
+        // Regular response
+        clearOptionButtons();
+        addMessage(data.response, 'assistant');
+        isWaitingForResponse = false;
+        skipButton.style.display = 'none';
+      }
+      
+      conversationHistory = data.conversation_history;
+      finishChatRound();
+    } else {
+      addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+    }
+  } catch (error) {
+    addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+    console.error('Network error:', error);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function continueRefinement(updatedPrompt) {
+  showLoading();
+  
+  console.log('Continue refinement called. Conversation history length:', conversationHistory.length);
+  
+  // Stop a runaway follow-up. User rounds are limited separately.
+  if (conversationHistory.length > CHAT_ROUND_LIMIT * 6) {
+    lockChatAtLimit();
+    hideLoading();
+    return;
+  }
+  
+  try {
+    // Instead of sending the updated prompt directly, send a continuation message
+    const continuationMessage = `Continue refining this prompt: ${updatedPrompt}`;
+    
+    const response = await fetch(`${API_BASE}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: continuationMessage,
+        conversation_history: conversationHistory,
+        temperature: 0.7,
+        use_fine_tuned: true
+      })
+    });
+
+    const data = await response.json();
+    
+    if (response.ok) {
+      if (data.is_question) {
+        await presentQuestion(data.response);
+      } else if (data.updated_prompt) {
+        // Another updated prompt - show it and wait for user input
+        updateLatestPromptDisplay(data.updated_prompt);
+        currentPrompt = data.updated_prompt.replace(/^["']|["']$/g, '');
+        
+        // Show a message indicating the prompt was updated
+        addMessage(`I've updated your prompt. You can continue refining it or let me know if you're satisfied.`, 'assistant');
+        isWaitingForResponse = false;
+        isInitialPrompt = true;
+        skipButton.style.display = 'none';
+      } else {
+        // If AI didn't ask a question or provide updated prompt, 
+        // stop and wait for user input
+        addMessage(data.response, 'assistant');
+        isWaitingForResponse = false;
+        isInitialPrompt = true;
+        skipButton.style.display = 'none';
+      }
+      
+      conversationHistory = data.conversation_history;
+    } else {
+      addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+    }
+  } catch (error) {
+    addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+    console.error('Network error:', error);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function handleRepetitiveQuestion() {
+  const antiRepetitionMessage = "Please ask a different question that hasn't been asked before in this session.";
+  
+  try {
+    const response = await fetch(`${API_BASE}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: antiRepetitionMessage,
+        conversation_history: conversationHistory,
+        temperature: 0.7,
+        use_fine_tuned: true
+      })
+    });
+
+    const data = await response.json();
+    
+    if (response.ok) {
+      if (data.is_question && isModelQuestion(data.response)) {
+        await requestNextQuestion();
+      } else if (data.is_question && !checkForRepetitiveQuestion(data.response)) {
+        showQuestion(data.response);
+      } else {
+        addMessage("I've asked all the relevant questions. Please continue refining your prompt or let me know if you need any specific changes.", 'assistant');
+        isWaitingForResponse = false;
+        skipButton.style.display = 'none';
+      }
+      
+      conversationHistory = data.conversation_history;
+    } else {
+      addMessage("Please continue refining your prompt or let me know if you need any specific changes.", 'assistant');
+      isWaitingForResponse = false;
+      skipButton.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Error handling repetitive question:', error);
+    addMessage("Please continue refining your prompt or let me know if you need any specific changes.", 'assistant');
+    isWaitingForResponse = false;
+    skipButton.style.display = 'none';
+  }
+}
+
+async function skipQuestion() {
+  if (!isWaitingForResponse) {
+    return;
+  }
+  if (!beginChatRound()) return;
+  
+  skipButton.disabled = true;
+  addMessage("(Skipped this question)", 'user');
+  showLoading();
+  
+  const skipMessage = "The user skipped that question. Ask one different question about the subject, audience, mood, setting, color, or typography. Do not ask about the image model or version. Do not reply with an updated prompt.";
+  
+  try {
+    const response = await fetch(`${API_BASE}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: skipMessage,
+        conversation_history: conversationHistory,
+        temperature: 0.7,
+        use_fine_tuned: true
+      })
+    });
+
+    const data = await response.json();
+    
+    if (response.ok) {
+      clearOptionButtons();
+      conversationHistory = data.conversation_history;
+
+      if (data.is_question) {
+        await presentQuestion(data.response);
+      } else if (data.updated_prompt) {
+        updateLatestPromptDisplay(data.updated_prompt);
+        currentPrompt = data.updated_prompt.replace(/^["']|["']$/g, '');
+        isUserEdit = false;
+        if (chatRounds + 1 < CHAT_ROUND_LIMIT) {
+          await requestNextQuestion();
+        } else {
+          isWaitingForResponse = false;
+          skipButton.style.display = 'none';
+        }
+      } else {
+        addMessage(data.response, 'assistant');
+        isWaitingForResponse = false;
+        skipButton.style.display = 'none';
+      }
+
+      finishChatRound();
+    } else {
+      addMessage('Sorry, I encountered an error while skipping the question. Please try again.', 'assistant');
+    }
+  } catch (error) {
+    addMessage('Sorry, I encountered an error while skipping the question. Please try again.', 'assistant');
+    console.error('Network error:', error);
+  } finally {
+    hideLoading();
+    skipButton.disabled = false;
+  }
+}
+
+function resetChat() {
+  conversationHistory = [];
+  currentPrompt = '';
+  isWaitingForResponse = false;
+  isInitialPrompt = true;
+  isUserEdit = false;
+  askedQuestions.clear();
+  chatRounds = 0;
+  chatLimitNoted = false;
+  nextQuestionAttempts = 0;
+  chatInput.disabled = false;
+  chatSendButton.disabled = false;
+  
+  chatMessages.innerHTML = `
+    <div class="message assistant">
+      <div class="message-avatar">Lynnar</div>
+      <div class="message-content">
+        Hi, I'm Lynnar, your design companion! Let's refine your prompt together.
+      </div>
+    </div>
+  `;
+  
+  clearOptionButtons();
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+  skipButton.style.display = 'none';
+  latestPromptDisplay.style.display = 'none';
+}
+
+async function generateImage() {
+  const visiblePrompt = (latestPromptText.textContent || '').trim();
+  const prompt = visiblePrompt || currentPrompt;
+
+  if (!prompt || prompt.length === 0) {
+    addMessage('Describe a visual idea first.', 'assistant');
+    return;
+  }
+  
+  generateImageButton.disabled = true;
+  showLoading('Generating an image...');
+  
+  // Send message to plugin code to generate image
+  parent.postMessage({
+    pluginMessage: {
+      type: 'generate-image',
+      prompt: prompt,
+      provider: 'dalle' // Can be made configurable
+    }
+  }, '*');
+}
+
+// Handle messages from plugin code
+window.addEventListener('message', (event) => {
+  const msg = event.data.pluginMessage;
+  if (!msg) return;
+  
+  switch (msg.type) {
+    case 'image-generation-start':
+      // Keep it quiet: use the same buffer spinner only
+      break;
+      
+    case 'image-generation-success':
+      generateImageButton.disabled = false;
+      hideLoading();
+      break;
+      
+    case 'image-generation-error':
+      generateImageButton.disabled = false;
+      hideLoading();
+      // Minimal feedback only on error
+      addMessage(`Failed to generate image: ${msg.error || 'Unknown error'}.`, 'assistant');
+      break;
+  }
+});
+
+// Event listeners
+generateImageButton.addEventListener('click', generateImage);
+
+chatForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const message = chatInput.value.trim();
+  
+  if (message) {
+    if (isInitialPrompt) {
+      // This is the initial prompt
+      sendInitialPrompt(message);
+    } else {
+      // This is a response to AI's question
+      sendUserResponse(message);
+    }
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+  }
+});
+
+chatInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    chatForm.dispatchEvent(new Event('submit'));
+  }
+});
+
+// Clear option buttons when user starts typing
+chatInput.addEventListener('input', () => {
+  const optionButtons = document.querySelectorAll('.option-buttons');
+  optionButtons.forEach(container => {
+    const buttons = container.querySelectorAll('.option-button');
+    buttons.forEach(btn => btn.classList.add('disabled'));
+  });
+});
+
+// Original layout generation functionality
+let firstPrompt = '';
+
+function showGuideError(message) {
+  const error = document.getElementById('guideError');
+  error.hidden = false;
+  error.textContent = message;
+  setGuideBusy(false);
+}
+
+function clearGuideError() {
+  const error = document.getElementById('guideError');
+  error.hidden = true;
+  error.textContent = '';
+}
+
+function updateSelectionStatus() {
+  const selected = document.querySelectorAll('.option-box.selected');
+  const status = document.getElementById('selectionStatus');
+  status.hidden = true;
+  status.textContent = '';
+  document.querySelectorAll('.option-box').forEach(box => {
+    box.setAttribute('aria-pressed', box.classList.contains('selected') ? 'true' : 'false');
+  });
+  if (selected.length > 0) clearGuideError();
+}
+
+function setGuideBusy(isBusy) {
+  sendBtn.disabled = isBusy;
+  sendBtn.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+  sendBtn.setAttribute('aria-label', isBusy ? 'Generating guides' : 'Generate guides');
+  if (isBusy) {
+    const text = loading.querySelector('.loading-text');
+    if (text) text.textContent = 'Generating layout guides...';
+    loading.style.display = 'block';
+  }
+}
+
+window.onload = () => {
+  loading.style.display = 'none';
+  setGuideBusy(false);
+  updateSelectionStatus();
+};
+
+document.querySelectorAll('.option-box').forEach(box => {
+  box.addEventListener('click', () => {
+    box.classList.toggle('selected');
+    updateSelectionStatus();
+  });
+});
+
+document.getElementById('send').onclick = () => {
+  const selectedOptions = Array.from(document.querySelectorAll('.option-box.selected')).map(box => box.dataset.value);
+  if (selectedOptions.length === 0) {
+    showGuideError('Select at least one element before generating guides.');
+    console.warn('[UI] Send clicked, but no options selected!');
+    return;
+  }
+  clearGuideError();
+  parent.postMessage({ pluginMessage: { type: 'send', selectedOptions } }, '*');
+  setGuideBusy(true);
+};
+
+window.onmessage = (event) => {
+  const msg = event.data.pluginMessage;
+  if (!msg) return;
+
+  if (msg.type === 'frame-size' && msg.error === 'no-frame') {
+    loading.style.display = 'none';
+    showGuideError('Select a frame on the canvas, then generate guides.');
+    return;
+  }
+  if (msg.type === 'frame-size' && msg.error === 'no-options') {
+    loading.style.display = 'none';
+    showGuideError('Select at least one element before generating guides.');
+    return;
+  }
+  if (msg.type === 'guides-error') {
+    loading.style.display = 'none';
+    showGuideError('The local server did not respond. Start it on port 5000, then try again.');
+    return;
+  }
+  if (msg.type === 'guides-ready') {
+    loading.style.display = 'none';
+    setGuideBusy(false);
+    clearGuideError();
+    const status = document.getElementById('selectionStatus');
+    status.hidden = false;
+    status.textContent = 'Guides placed on the canvas.';
+    return;
+  }
+  if (msg.type === 'loading') {
+    loading.style.display = msg.loading ? 'block' : 'none';
+    if (msg.loading) {
+      const text = loading.querySelector('.loading-text');
+      if (text) text.textContent = 'Generating layout guides...';
+    }
+    setGuideBusy(msg.loading);
+  }
+};
+</script>
+</body>
+</html>
